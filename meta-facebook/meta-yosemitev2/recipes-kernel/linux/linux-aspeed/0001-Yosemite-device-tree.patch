@@ -1,7 +1,4 @@
-From 2e0c4ab010fcb8ebfd2d477853af7db17cf52a04 Mon Sep 17 00:00:00 2001
-From: Vijay Khemka <vijaykhemka@fb.com>
-Date: Sun, 1 Dec 2019 20:12:48 -0800
-Subject: [PATCH 1/4] Yosemite device tree
+Subject: [PATCH] Yosemite-device-tree
 
 The Yosemite V2 is a facebook multi-node server
 platform that host four OCP server. The BMC
@@ -13,23 +10,22 @@ Yosemite V2 specific devices connected to BMC SoC.
 Signed-off-by: manikandan-e <manikandan.hcl.ers.epl@gmail.com>
 Signed-off-by: Vijay Khemka <vijaykhemka@fb.com>
 ---
- .../dts/aspeed-bmc-facebook-yosemitev2.dts    | 151 ++++++++++++++++++
- 1 file changed, 151 insertions(+)
+ .../boot/dts/aspeed-bmc-facebook-yosemitev2.dts    | 188 +++++++++++++++++++++
+ 1 file changed, 188 insertions(+)
  create mode 100644 arch/arm/boot/dts/aspeed-bmc-facebook-yosemitev2.dts
 
 diff --git a/arch/arm/boot/dts/aspeed-bmc-facebook-yosemitev2.dts b/arch/arm/boot/dts/aspeed-bmc-facebook-yosemitev2.dts
 new file mode 100644
-index 000000000000..6c44abf13899
+index 0000000..9606641a
 --- /dev/null
 +++ b/arch/arm/boot/dts/aspeed-bmc-facebook-yosemitev2.dts
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,188 @@
 +// SPDX-License-Identifier: GPL-2.0+
 +// Copyright (c) 2018 Facebook Inc.
 +/dts-v1/;
 +
 +#include "aspeed-g5.dtsi"
 +#include <dt-bindings/gpio/aspeed-gpio.h>
-+
 +/ {
 +	model = "Facebook Yosemitev2 BMC";
 +	compatible = "facebook,yosemitev2-bmc", "aspeed,ast2500";
@@ -74,8 +70,46 @@ index 000000000000..6c44abf13899
 +	};
 +};
 +
++&uart1 {
++	// Host1 Console
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_txd1_default
++		     &pinctrl_rxd1_default>;
++};
++
++&uart2 {
++	// Host2 Console
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_txd2_default
++		     &pinctrl_rxd2_default>;
++
++};
++
++&uart3 {
++	// Host3 Console
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_txd3_default
++		     &pinctrl_rxd3_default>;
++};
++
++&uart4 {
++	// Host4 Console
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_txd4_default
++		     &pinctrl_rxd4_default>;
++};
++
 +&uart5 {
 +	// BMC Console
++	status = "okay";
++};
++
++&vuart {
++	// Virtual UART
 +	status = "okay";
 +};
 +
@@ -175,5 +209,5 @@ index 000000000000..6c44abf13899
 +	};
 +};
 -- 
-2.17.1
+2.7.4
 
