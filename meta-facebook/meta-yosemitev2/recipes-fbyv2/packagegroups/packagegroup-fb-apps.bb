@@ -17,4 +17,5 @@ RDEPENDS_${PN}-system = " \
         entity-manager \
         dbus-sensors \
         phosphor-pid-control \
+        fb-powerctrl \
         "
