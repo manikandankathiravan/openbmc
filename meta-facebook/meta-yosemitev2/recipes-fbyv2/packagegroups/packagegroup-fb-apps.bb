@@ -18,4 +18,7 @@ RDEPENDS_${PN}-system = " \
         dbus-sensors \
         phosphor-pid-control \
         fb-powerctrl \
+        phosphor-ipmi-ipmb \
+        fb-ipmi-oem \
+        ipmitool \
         "
