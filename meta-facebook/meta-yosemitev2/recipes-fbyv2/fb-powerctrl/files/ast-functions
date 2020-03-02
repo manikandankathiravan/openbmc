@@ -1,56 +1,5 @@
 # Copyright 2014-present Facebook. All Rights Reserved.
 
-#. /usr/bin/kv  //TODO
-
-
-DEVMEM=/sbin/devmem
-
-devmem_set_bit() {
-    local addr
-    local val
-    addr=$1
-    val=$($DEVMEM $addr)
-    val=$((val | (0x1 << $2)))
-    $DEVMEM $addr 32 $val
-}
-
-devmem_clear_bit() {
-    local addr
-    local val
-    addr=$1
-    val=$($DEVMEM $addr)
-    val=$((val & ~(0x1 << $2)))
-    $DEVMEM $addr 32 $val
-}
-
-devmem_clear_scu70_bit() {
-    local val
-    val=$((0x1 << $1))
-    $DEVMEM 0x1E6E207C 32 $val
-}
-
-scu_addr() {
-    echo $((0x1E6E2000 + 0x$1))
-}
-
-uart1_addr() {
-    echo $((0x1E783000 + 0x$1))
-}
-
-uart3_addr() {
-    echo $((0x1E78E000 + 0x$1))
-}
-
-#LPC Controller, Base Address = 0x1E78_9000
-lpc_addr() {
-    echo $((0x1E789000 + 0x$1))
-}
-
-#GPIO Controller, Base Address = 0x1E78_0000
-gpio_addr() {
-    echo $((0x1E780000 + 0x$1))
-}
-
 GPIODIR="/sys/class/gpio"
 GPIOEXPORT="$GPIODIR/export"
 
@@ -100,25 +49,6 @@ gpio_export() {
     fi
 }  
 
-gpio_export_out() {
-    local gpio
-    gpio=$(gpio_name2value $1)
-    dir=$(gpio_dir $gpio)
-    if [ ! -d ${dir} ]; then
-        echo $gpio > $GPIOEXPORT
-        echo out > ${dir}/direction
-    fi
-}
-
-pca9555_gpio_export() {
-    local gpio
-    gpio=$1
-    dir=$(gpio_dir $gpio)
-    if [ ! -d ${dir} ]; then
-        echo $gpio > $GPIOEXPORT
-    fi
-}
-
 gpio_set() {
     local gpio
     local val
@@ -148,34 +78,6 @@ gpio_get() {
     fi
     echo in > ${dir}/direction
     cat ${dir}/value
-}
-
-# Store and Clear POR bit
-store_clear_por()
-{
-  local val
-
-  if [ -f /tmp/ast_por ]; then
-    return
-  fi
-
-  # Read the Watch Dog Flag
-  val=$(devmem 0x1e6e203c 2>/dev/null)
-  if [ "$((val & 0x1))" == "1" ]; then
-      # Power ON Reset
-      echo 1 > /tmp/ast_por
-  else
-      echo 0 > /tmp/ast_por
-  fi
-
-  # Clear Power On Reset bit
-  devmem 0x1e6e203c 32 $((val & 0xfffffffe)) 2>/dev/null
-}
-
-# Check to see if BMC power-on-reset
-is_bmc_por() {
-  store_clear_por
-  /bin/cat /tmp/ast_por
 }
 
 # Check to see if server is present in given slot or not
@@ -236,50 +138,6 @@ get_slot_type() {
   echo $type
 }
 
-# Get server type (00:TwinLakes, 01:RC, 10:EP, 11:Unknown)
-get_server_type() {
-  server_type_file="/tmp/server_type$1.bin"
-  if [ -f $server_type_file ]; then
-    type=$(read_file_rertry 3 10000 $server_type_file)
-    if [ -z $type ]; then
-      type=3
-    fi
-  else
-    type=3
-  fi
-
-  echo $type
-}
-
-# Check to see if Bridge-IC is ready in given slot or not
-is_bic_ready() {
-  local ready
-
-  case $1 in
-   1)
-    ready=$(gpio_get N2)
-    ;;
-   2)
-    ready=$(gpio_get N3)
-    ;;
-   3)
-    ready=$(gpio_get N4)
-    ;;
-   4)
-    ready=$(gpio_get N5)
-    ;;
-   *)
-    ready="1"
-    ;;
-  esac
-
-  if [ $ready == "0" ]; then
-    echo 1
-  else
-    echo 0
-  fi
-}
-
 fby2_is_server_on() {
   local pwr_sts
 
@@ -304,104 +162,3 @@ fby2_is_server_on() {
   echo $pwr_sts
 }
 
-gpio_get_val() {
-    local gpio
-    local val
-    gpio=$(gpio_name2value $1)
-    dir=$(gpio_dir $gpio)
-    if [ ! -d ${dir} ]; then
-        echo $gpio > $GPIOEXPORT
-    fi
-    cat ${dir}/value
-}
-
-get_slot_bus() {
-  local bus
-
-  case $1 in
-    1)
-      bus=1
-      ;;
-    2)
-      bus=3
-      ;;
-    3)
-      bus=5
-      ;;
-    4)
-      bus=7
-      ;;
-  esac
-
-  echo $bus
-}
-
-i2c_remove_device() {
-      SLOT_BUS=$1
-      DEV_SLAVE_ADDR=$2
-      I2C_DEV=`echo $DEV_SLAVE_ADDR | sed s/x/0/g`
-
-      if [ -d /sys/class/i2c-dev/i2c-$SLOT_BUS/device/$SLOT_BUS-$I2C_DEV ]; then
-         echo $DEV_SLAVE_ADDR > /sys/class/i2c-dev/i2c-$SLOT_BUS/device/delete_device
-      fi
-}
-
-i2c_add_device() {
-      SLOT_BUS=$1
-      DEV_SLAVE_ADDR=$2
-      DEV_NAME=$3
-
-      echo $DEV_NAME $DEV_SLAVE_ADDR > /sys/class/i2c-dev/i2c-$SLOT_BUS/device/new_device
-}
-
-# Check to see if slot 12v is on or not
-is_slot_12v_on() {
-  local gpio
-  local status
-  local dir
-
-  case $1 in
-   1)
-    gpio=$(gpio_name2value O4)
-    gpio=$((gpio+280))  #TODO
-    dir=$(gpio_dir $gpio)
-    status=$(cat ${dir}/value)
-    ;;
-   2)
-    gpio=$(gpio_name2value O5)
-    gpio=$((gpio+280))  #TODO
-    dir=$(gpio_dir $gpio)
-    status=$(cat ${dir}/value)
-    ;;
-   3)
-    gpio=$(gpio_name2value O6)
-    gpio=$((gpio+280))  #TODO
-    dir=$(gpio_dir $gpio)
-    status=$(cat ${dir}/value)
-    ;;
-   4)
-    gpio=$(gpio_name2value O7)
-    gpio=$((gpio+280))  #TODO
-    dir=$(gpio_dir $gpio)
-    status=$(cat ${dir}/value)
-    ;;
-   *)
-    status="0"
-    ;;
-  esac
-
-  if [ $status == "1" ]; then
-    echo 1
-  else
-    echo 0
-  fi
-}
-
-# Check to see if BMC time synced
-is_date_synced() {
-  if [ -f /tmp/sync_date ]; then
-    /bin/cat /tmp/sync_date
-  else
-    echo 0
-  fi
-}
