@@ -4,14 +4,12 @@ SRC_URI_append_yosemitev2 = " file://server.ttyVUART0.conf \
 			      file://server.ttyVUART1.conf \
                               file://server.ttyVUART2.conf \
                               file://server.ttyVUART3.conf \
+                              file://server.ttyVUART4.conf \
                               file://client.2200.conf \
                               file://client.2201.conf \
                               file://client.2202.conf \
                               file://client.2203.conf \                             
-                              file://obmc-console-ssh@2200.service \                             
-                              file://obmc-console-ssh@2201.service \                             
-                              file://obmc-console@2200.service \                             
-                              file://obmc-console@2201.service \                             
+                              file://client.2204.conf \                             
 "
 
 SRC_URI_remove = "[file://${BPN}.conf]file://${BPN}.conf"
@@ -32,9 +30,6 @@ EXTRA_OECONF_append_yosemitev2 = " --enable-concurrent-servers"
 
 do_install_append_yosemitev2(){
 
-        # Install service files to /lib/systemd/system
-        install -m 0644 ${WORKDIR}/obmc-console@2200.service ${D}${systemd_system_unitdir}
-        install -m 0644 ${WORKDIR}/obmc-console@2201.service ${D}${systemd_system_unitdir}
 
         # Install configuration for the servers and clients. Keep commandline
         # compatibility with previous configurations by defaulting to not
@@ -55,12 +50,12 @@ do_install_append_yosemitev2(){
         install -m 0644 ${WORKDIR}/client.2201.conf ${D}${sysconfdir}/${BPN}/
         install -m 0644 ${WORKDIR}/client.2202.conf ${D}${sysconfdir}/${BPN}/
         install -m 0644 ${WORKDIR}/client.2203.conf ${D}${sysconfdir}/${BPN}/
+        install -m 0644 ${WORKDIR}/client.2204.conf ${D}${sysconfdir}/${BPN}/
 
         # Install configuration for remaining servers.
         install -m 0644 ${WORKDIR}/server.ttyVUART1.conf ${D}${sysconfdir}/${BPN}/
         install -m 0644 ${WORKDIR}/server.ttyVUART2.conf ${D}${sysconfdir}/${BPN}/
         install -m 0644 ${WORKDIR}/server.ttyVUART3.conf ${D}${sysconfdir}/${BPN}/
+        install -m 0644 ${WORKDIR}/server.ttyVUART4.conf ${D}${sysconfdir}/${BPN}/
 }
 
-FILES_${PN} += "/lib/systemd/system/obmc-console@2200.service"
-FILES_${PN} += "/lib/systemd/system/obmc-console@2201.service"
